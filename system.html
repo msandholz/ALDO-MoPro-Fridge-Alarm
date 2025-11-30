@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MoPro-Control-System</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="/style.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+   <script>
+      function refreshData(){
+          getData('/getdata');
+          setInterval(function(){getData('/getdata');}, 5000); // Daten alle 5 Sekunden abrufen  
+          
+          getSystemData();
+          setInterval(function(){getSystemData();}, 30000); // Daten alle 30 Sekunden abrufen 
+      }
+      
+      // Request data
+      function getData(URL) {
+        const xhr = new XMLHttpRequest();
+        xhr.onload = function() {
+          if (xhr.status >= 200 && xhr.status < 300) {
+              // Parse the JSON data from the response
+              var data= JSON.parse(xhr.responseText);
+              console.log(data); // Handle the JSON data
+
+              document.title = data["HOSTNAME"];
+              document.getElementById("VERSION").innerHTML = data["VERSION"];
+              document.getElementById("TARGET_TEMP").value = data["TARGET_TEMP"];
+              document.getElementById("FRIDGE_TEMP").innerHTML = data["FRIDGE_TEMP"];
+            
+              if (data["MAX_TEMP"] == -100) {
+                  document.getElementById("MIN_TEMP").innerHTML = "-";
+                  document.getElementById("MAX_TEMP").innerHTML = "-";
+              } else {        
+                  document.getElementById("MIN_TEMP").innerHTML = data["MIN_TEMP"];
+                  document.getElementById("MAX_TEMP").innerHTML = data["MAX_TEMP"];
+              }
+
+              if (data["ALARM"] == true) {
+                  document.getElementById("ALARM_COLOR").style.backgroundColor = "red";    
+                  document.getElementById("ALARM").innerHTML = "Ausfall !!";
+                  console.log("MoPro Ausfall!");
+
+                } else {
+                  document.getElementById("ALARM_COLOR").style.backgroundColor = "#04AA6D";  
+                  document.getElementById("ALARM").innerHTML = "OK !!";
+                  console.log("MoPro OK!");
+                }
+             
+          } else {
+              // Handle any errors that occur
+              console.error("Request failed with status: " + xhr.status);
+          }
+        }
+        xhr.open("GET", URL, true);
+        xhr.send();
+      }
+      
+      // Buildung URL with parameters
+      function setData() {
+        const url = new URL('http://'+ location.host
+                +'/getdata'
+                +'?TARGET_TEMP='+ parseInt(document.getElementById('TARGET_TEMP').value, 10)
+                );
+        console.log('REQUEST:'+url);
+        getData(url);
+    }
+
+      // Reset Min/Max - Temperature
+      function ResetTemp() {
+        const url = new URL('http://'+ location.host
+                +'/getdata?MIN_TEMP=100&MAX_TEMP=-100'
+                );
+        console.log('REQUEST:'+url);
+        getData(url);
+
+      } 
+  
+      // Temperature up/down
+      function TempCount(updown) {
+          var temp = parseInt(document.getElementById('TARGET_TEMP').value, 10);
+          if (updown == '+') {
+              if (temp < 25) { temp = temp + 1; }
+          } else {
+              if (temp > 0) { temp = temp - 1; }
+          }
+          document.getElementById('TARGET_TEMP').value = temp;
+          setData();
+      } 
+
+      //get system data
+      function getSystemData() {
+        const xhr = new XMLHttpRequest();
+        xhr.onload = function() {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            // Parse the JSON data from the response
+            var data= JSON.parse(xhr.responseText);
+            console.log(data); // Handle the JSON data
+
+            var rssi = parseInt(data["RSSI"], 10);
+            document.getElementById("rssiText").innerHTML = "<b>RSSI:"+rssi+"dBm</b>";
+
+            // Update RSSI signal bars
+            document.getElementById("dot").style.fill = (rssi < -80) ? "currentColor" : "#f2f2f2";
+ 	          document.getElementById("arc1").style.stroke = (rssi < -71) ? "currentColor" : "#f2f2f2";
+            document.getElementById("arc2").style.stroke = (rssi < -61) ? "currentColor" : "#f2f2f2";
+            document.getElementById("arc3").style.stroke = (rssi < -54) ? "currentColor" : "#f2f2f2";
+
+          } else {
+              // Handle any errors that occur
+              console.error("Request failed with status: " + xhr.status);
+          }
+        }
+        xhr.open("GET", '/getsys', true);
+        xhr.send();
+      }
+
+  </script>
+</head>
+
+<body onload="refreshData()">
+    <div class="topnav" id="ALARM_COLOR">
+      <a href="/" title="Home">
+        <svg xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 512 512"
+          width="44"
+          height="36"
+          fill="currentColor">
+          <path fill="currentColor" d="M543.8 287.6c17 0 32-14 32-32.1c1-9-3-17-11-24L512 185V64c0-17.7-14.3-32-32-32H448c-17.7 0-32 14.3-32 32v36.7L309.5 7c-6-5-14-7-21-7s-15 1-22 8L10 231.5c-7 7-10 15-10 24c0 18 14 32.1 32 32.1h32v69.7c-.1 .9-.1 1.8-.1 2.8V472c0 22.1 17.9 40 40 40h16c1.2 0 2.4-.1 3.6-.2c1.5 .1 3 .2 4.5 .2H160h24c22.1 0 40-17.9 40-40V448 384c0-17.7 14.3-32 32-32h64c17.7 0 32 14.3 32 32v64 24c0 22.1 17.9 40 40 40h24 32.5c1.4 0 2.8 0 4.2-.1c1.1 .1 2.2 .1 3.3 .1h16c22.1 0 40-17.9 40-40V455.8c.3-2.6 .5-5.3 .5-8.1l-.7-160.2h32z"/>
+         </svg>
+        </a>  
+      <a href="/config" title="Konfiguration">
+        <svg xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 512 512"
+          width="50"
+          height="36"
+          fill="currentColor">
+          <path fill="currentColor" d="M495.9 166.6c3.2 8.7 .5 18.4-6.4 24.6l-43.3 39.4c1.1 8.3 1.7 16.8 1.7 25.4s-.6 17.1-1.7 25.4l43.3 39.4c6.9 6.2 9.6 15.9 6.4 24.6c-4.4 11.9-9.7 23.3-15.8 34.3l-4.7 8.1c-6.6 11-14 21.4-22.1 31.2c-5.9 7.2-15.7 9.6-24.5 6.8l-55.7-17.7c-13.4 10.3-28.2 18.9-44 25.4l-12.5 57.1c-2 9.1-9 16.3-18.2 17.8c-13.8 2.3-28 3.5-42.5 3.5s-28.7-1.2-42.5-3.5c-9.2-1.5-16.2-8.7-18.2-17.8l-12.5-57.1c-15.8-6.5-30.6-15.1-44-25.4L83.1 425.9c-8.8 2.8-18.6 .3-24.5-6.8c-8.1-9.8-15.5-20.2-22.1-31.2l-4.7-8.1c-6.1-11-11.4-22.4-15.8-34.3c-3.2-8.7-.5-18.4 6.4-24.6l43.3-39.4C64.6 273.1 64 264.6 64 256s.6-17.1 1.7-25.4L22.4 191.2c-6.9-6.2-9.6-15.9-6.4-24.6c4.4-11.9 9.7-23.3 15.8-34.3l4.7-8.1c6.6-11 14-21.4 22.1-31.2c5.9-7.2 15.7-9.6 24.5-6.8l55.7 17.7c13.4-10.3 28.2-18.9 44-25.4l12.5-57.1c2-9.1 9-16.3 18.2-17.8C227.3 1.2 241.5 0 256 0s28.7 1.2 42.5 3.5c9.2 1.5 16.2 8.7 18.2 17.8l12.5 57.1c15.8 6.5 30.6 15.1 44 25.4l55.7-17.7c8.8-2.8 18.6-.3 24.5 6.8c8.1 9.8 15.5 20.2 22.1 31.2l4.7 8.1c6.1 11 11.4 22.4 15.8 34.3zM256 336c44.2 0 80-35.8 80-80s-35.8-80-80-80s-80 35.8-80 80s35.8 80 80 80z"/>
+        </svg>  
+      </a>
+      <a href="/system" title="System">
+        <svg xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 512 512"
+          width="50"
+          height="36"
+          fill="currentColor">
+          <path fill="currentColor" d="M256 109.3L256 320c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-210.7-41.4 41.4c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3l96-96c12.5-12.5 32.8-12.5 45.3 0l96 96c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L256 109.3zM224 400c44.2 0 80-35.8 80-80l80 0c35.3 0 64 28.7 64 64l0 32c0 35.3-28.7 64-64 64L64 480c-35.3 0-64-28.7-64-64l0-32c0-35.3 28.7-64 64-64l80 0c0 44.2 35.8 80 80 80zm144 24a24 24 0 1 0 0-48 24 24 0 1 0 0 48z"/>
+        </svg>  
+      </a>
+ 
+      <div class="ALARM">Status:<b id="ALARM">OK !!</b></div>
+
+      <div class="topnav-right" title="RSSI Signalstärke" onmouseenter="javascript:getSystemData()">
+        <svg xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 50 36"
+          width="50"
+          height="36"
+          fill="currentColor">
+   	      <path id="arc3" d="M8 15 A18 16 0 0 1 42 15" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" />
+          <path id="arc2" d="M12 19 A15 16 0 0 1 38 19" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" />
+          <path id="arc1" d="M16 23 A12 16 0 0 1 34 23" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" />
+
+          <circle id="dot" cx="25" cy="28" r="5" fill="currentColor" />
+            
+        </svg>  
+        <div class="rssi-value" id="rssiText"><b>RSSI:-dBm</b></div>  
+      </div>
+    </div>
+ 
+    <div class="row">
+      <h2>ALDO MoPro Alarm Einstellungen</h2>
+        <center>
+        <table class="center">
+          <tr>
+             <th colspan="2" class="txt_center"><b>Alarm bei [&deg;C]:</b></th>
+          </tr>
+          <tr>
+            <th colspan="2">
+              <input class="big-button" type="submit" value="-" onclick="javascript:TempCount('-')">
+              <input class="big-font" type="number" min="0" max="25" step="1" size="4" name="TARGET_TEMP" id="TARGET_TEMP" value="5" onchange="setData()">
+              <input class="big-button" type="submit" value="+" onclick="javascript:TempCount('+')">
+            </th>
+          </tr>
+          <tr>
+             <th colspan="2" class="txt_center"><b>Aktuelle Temperatur:  <b id="FRIDGE_TEMP"></b><b> &deg;C</b></th>
+          </tr>
+          <tr>
+             <th colspan="2" class="txt_center"><b>Minimale Temperatur:  <b id="MIN_TEMP"></b><b> &deg;C</b></th>
+          </tr>
+          <tr>
+             <th colspan="2" class="txt_center"><b>Maximale Temperatur:  <b id="MAX_TEMP"></b><b> &deg;C</b></th>
+          </tr>
+          <tr>
+             <th colspan="2"><input class="danger" type="submit" value="Reset" onclick="javascript:ResetTemp()"></th>
+          </tr>
+          </table>
+          <br>
+          
+        </center>
+    <br>
+    </div>
+    <div class="footer">&copy; by Sandholz Engineering (Version: <span id="VERSION"></span>)</div> 
+  </body>
+</html>

@@ -1,0 +1,23 @@
+{
+    "MODE":"NORMAL",
+    "TARGET_TEMP": 23,
+    "MIN_TEMP" : 100,
+    "MAX_TEMP" : -100,
+    "HYSTERESIS": 2,
+    "NOTIFICATION": false,
+    "REMINDER": 1,
+    "DEEP_SLEEP_INTERVAL": 15,
+    "FRIDGE_TEMP": 0,
+    "HOSTNAME":"aldo-mopro",
+    "WIFI_AP_SSID": "aldo-mopro",
+    "WIFI_STA_SSID": "WLAN",
+    "WIFI_STA_PW": "74696325262072177928",
+    "PHONE_NUMBER_1" : "491719348490",
+    "API_KEY_1" : "6942851",
+    "PHONE_NUMBER_2" : "",
+    "API_KEY_2" : "",
+    "PHONE_NUMBER_3" : "",
+    "API_KEY_3" : "" ,
+    "VERSION" : "0.0.1",
+    "ALARM" : false
+}
